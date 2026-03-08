@@ -71,29 +71,33 @@ const Index = () => {
               title: "RF Detection",
               desc: "Monitor electromagnetic radiofrequency pollution across regions in real-time.",
               color: "text-danger",
+              link: "/dashboard",
             },
             {
               icon: Bird,
               title: "Bird Tracking",
               desc: "Overlay migratory bird routes with RF pollution data to identify interference zones.",
               color: "text-primary",
+              link: "/risk-map",
             },
             {
               icon: Compass,
               title: "Risk Analysis",
               desc: "Predict magnetoreception disruption using spatial analysis and frequency data.",
               color: "text-moderate",
+              link: "/prediction",
             },
           ].map((feature) => (
-            <div
+            <Link
               key={feature.title}
-              className="bg-card border border-border rounded-xl p-6 hover:border-primary/30 transition-colors group"
+              to={feature.link}
+              className="bg-card border border-border rounded-xl p-6 hover:border-primary/30 transition-colors group block"
             >
               <feature.icon className={`h-6 w-6 ${feature.color} mb-4`} />
               <h3 className="font-heading font-semibold text-foreground mb-2">{feature.title}</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
               <ArrowRight className="h-4 w-4 text-muted-foreground mt-4 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-            </div>
+            </Link>
           ))}
         </div>
       </section>
