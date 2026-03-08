@@ -16,33 +16,34 @@ serve(async (req) => {
       throw new Error('EBIRD_API_KEY is not configured');
     }
 
+    // Log key length for debugging (never log the actual key)
+    console.log(`eBird API key length: ${EBIRD_API_KEY.length}, starts with: ${EBIRD_API_KEY.substring(0, 3)}...`);
+
     const { lat, lng, dist, maxResults } = await req.json();
 
-    const params = new URLSearchParams({
-      lat: String(lat || 13.08),
-      lng: String(lng || 80.27),
-      dist: String(dist || 50),
-      maxResults: String(maxResults || 30),
-      back: '14',
+    const url = `https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lng}&dist=${dist || 50}&maxResults=${maxResults || 30}&back=14`;
+    
+    console.log(`Fetching: ${url}`);
+
+    const response = await fetch(url, {
+      headers: { 'X-eBirdApiToken': EBIRD_API_KEY },
     });
 
-    const response = await fetch(
-      `https://api.ebird.org/v2/data/obs/geo/recent?${params}`,
-      { headers: { 'X-eBirdApiToken': EBIRD_API_KEY } }
-    );
+    const text = await response.text();
+    console.log(`eBird response status: ${response.status}, body length: ${text.length}`);
 
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`eBird API error [${response.status}]: ${text}`);
+      throw new Error(`eBird API error [${response.status}]: ${text.substring(0, 200)}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(text);
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Edge function error:', message);
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
