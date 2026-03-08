@@ -1,1 +1,4 @@
 project_id = "kqcpnsprvbqjelaaixvu"
+
+[functions.ebird-observations]
+verify_jwt = false
