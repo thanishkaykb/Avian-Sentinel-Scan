@@ -11,34 +11,45 @@ serve(async (req) => {
   }
 
   try {
-    const EBIRD_API_KEY = Deno.env.get('EBIRD_API_KEY');
-    if (!EBIRD_API_KEY) {
-      throw new Error('EBIRD_API_KEY is not configured');
-    }
+    const { lat, lng, radius, perPage } = await req.json();
 
-    // Log key length for debugging (never log the actual key)
-    console.log(`eBird API key length: ${EBIRD_API_KEY.length}, starts with: ${EBIRD_API_KEY.substring(0, 3)}...`);
-
-    const { lat, lng, dist, maxResults } = await req.json();
-
-    const url = `https://api.ebird.org/v2/data/obs/geo/recent?lat=${lat}&lng=${lng}&dist=${dist || 50}&maxResults=${maxResults || 30}&back=14`;
-    
-    console.log(`Fetching: ${url}`);
-
-    const response = await fetch(url, {
-      headers: { 'X-eBirdApiToken': EBIRD_API_KEY },
+    const params = new URLSearchParams({
+      lat: String(lat || 13.08),
+      lng: String(lng || 80.27),
+      radius: String(radius || 50),
+      iconic_taxa: 'Aves',
+      per_page: String(perPage || 20),
+      order: 'desc',
+      order_by: 'observed_on',
+      quality_grade: 'research',
     });
 
+    const url = `https://api.inaturalist.org/v1/observations?${params}`;
+    console.log(`Fetching: ${url}`);
+
+    const response = await fetch(url);
     const text = await response.text();
-    console.log(`eBird response status: ${response.status}, body length: ${text.length}`);
 
     if (!response.ok) {
-      throw new Error(`eBird API error [${response.status}]: ${text.substring(0, 200)}`);
+      throw new Error(`iNaturalist API error [${response.status}]: ${text.substring(0, 200)}`);
     }
 
-    const data = JSON.parse(text);
+    const raw = JSON.parse(text);
 
-    return new Response(JSON.stringify(data), {
+    // Map to a simpler format
+    const observations = (raw.results || []).map((obs: any) => ({
+      id: obs.id,
+      comName: obs.taxon?.preferred_common_name || obs.species_guess || 'Unknown',
+      sciName: obs.taxon?.name || '',
+      locName: obs.place_guess || 'Unknown location',
+      lat: obs.geojson?.coordinates?.[1] ?? lat,
+      lng: obs.geojson?.coordinates?.[0] ?? lng,
+      obsDt: obs.observed_on || '',
+      howMany: obs.taxon?.observations_count,
+      photoUrl: obs.photos?.[0]?.url?.replace('square', 'small') || null,
+    }));
+
+    return new Response(JSON.stringify(observations), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
