@@ -3,8 +3,8 @@ import { X, Radio, Bird, MapPin, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-interface EBirdObservation {
-  speciesCode: string;
+interface BirdObservation {
+  id: number;
   comName: string;
   sciName: string;
   locName: string;
