@@ -12,6 +12,7 @@ interface BirdObservation {
   lng: number;
   obsDt: string;
   howMany?: number;
+  photoUrl?: string | null;
 }
 
 const hotspots = [
