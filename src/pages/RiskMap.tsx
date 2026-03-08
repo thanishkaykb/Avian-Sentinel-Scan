@@ -3,8 +3,8 @@ import { X, Radio, Bird, MapPin, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-interface EBirdObservation {
-  speciesCode: string;
+interface BirdObservation {
+  id: number;
   comName: string;
   sciName: string;
   locName: string;
@@ -12,6 +12,7 @@ interface EBirdObservation {
   lng: number;
   obsDt: string;
   howMany?: number;
+  photoUrl?: string | null;
 }
 
 const hotspots = [
@@ -39,18 +40,18 @@ const geoToMap = (lat: number, lng: number) => ({
 
 const RiskMap = () => {
   const [selected, setSelected] = useState<typeof hotspots[0] | null>(null);
-  const [selectedBird, setSelectedBird] = useState<EBirdObservation | null>(null);
-  const [eBirdData, setEBirdData] = useState<EBirdObservation[]>([]);
+  const [selectedBird, setSelectedBird] = useState<BirdObservation | null>(null);
+  const [eBirdData, setEBirdData] = useState<BirdObservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRegion = async (lat: number, lng: number, dist = 50) => {
+  const fetchRegion = async (lat: number, lng: number, radius = 50) => {
     const { data, error: fnError } = await supabase.functions.invoke('ebird-observations', {
-      body: { lat, lng, dist, maxResults: 20 },
+      body: { lat, lng, radius, perPage: 20 },
     });
     if (fnError) throw fnError;
     if (data?.error) throw new Error(data.error);
-    return data as EBirdObservation[];
+    return data as BirdObservation[];
   };
 
   const fetchAllRegions = async () => {
